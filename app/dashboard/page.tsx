@@ -6,7 +6,6 @@ import { FaShoppingCart, FaChartLine, FaBalanceScale } from "react-icons/fa";
 import NavigationBar from "../components/NavigationBar";
 import OnboardingOverlay from "../components/OnboardingOverlay";
 import PlanSelectModal from "../components/PlanSelectModal";
-import TimelineItem from "../components/TimelineItem";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -98,16 +97,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl p-8 shadow-lg mb-8 mt-12">
-          <h2 className="text-2xl font-semibold mb-6 text-gray-800 text-center">
-            Enrollment Timeline
-          </h2>
-          <div className="space-y-6 max-w-3xl mx-auto">
-            <TimelineItem title="General Enrollment" dates="Jan 1–Mar 31" progress={65} />
-            <TimelineItem title="Open Enrollment" dates="Oct 15–Dec 7" progress={30} />
-            <TimelineItem title="Special Enrollment" dates="Varies by case" progress={15} />
-          </div>
-        </div>
 
         <div className="flex justify-center gap-6 items-center">
           <button

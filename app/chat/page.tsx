@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect, FormEvent, Suspense } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { FaComments, FaMicrophone, FaRegBookmark, FaShare, FaPlus, FaEdit, FaTimes, FaChartBar } from "react-icons/fa";
@@ -29,7 +29,7 @@ const formatResponse = (text: string) => {
   try {
     const data = JSON.parse(text);
     let formatted = '';
-    
+
     if (data.comparison) {
       formatted += `<div class="space-y-6">`;
       data.comparison.forEach((item: any) => {
@@ -57,8 +57,8 @@ const formatResponse = (text: string) => {
         <h2 class="text-xl font-semibold mb-2">Recommendations</h2>
         <ul class="list-disc ml-6">
           ${data.recommendations
-            .map((r: any) => `<li>${r.title || r.text || JSON.stringify(r)}</li>`)
-            .join("")}
+          .map((r: any) => `<li>${r.title || r.text || JSON.stringify(r)}</li>`)
+          .join("")}
         </ul>
       </div>`;
     }
@@ -85,7 +85,8 @@ const formatResponse = (text: string) => {
   }
 };
 
-export default function ChatPage() {
+// Separate component to handle search params
+function ChatPageContent() {
   const router = useRouter();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -171,44 +172,43 @@ export default function ChatPage() {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-  
+
     const userMsg: Message = { text: input, fromUser: true };
     const newMessages = [...messages, userMsg];
     updateMessages(newMessages);
     setInput("");
-  
+
     let fullQuery = input;
     if (selectedPlan && selectedPlanB) {
       fullQuery = `compare ${selectedPlan} with ${selectedPlanB} on ${input}`;
     } else if (selectedPlan) {
       fullQuery = `${input}, ${selectedPlan}`;
-    }else {
-        fullQuery = `recommend ${input}`;
-      }
-    
-  
+    } else {
+      fullQuery = `recommend ${input}`;
+    }
+
     try {
       const res = await fetch("http://10.16.216.161:8000/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: fullQuery }),
       });
-  
+
       const data = await res.json();
       const raw = data.answer || "⚠️ No response from backend.";
-      // const formattedText = formatResponse(raw);
-      const payload = Array.isArray(data.recommendations)
-  ? JSON.stringify({ recommendations: data.recommendations })
-  : (data.answer || "⚠️ No response from backend.");
 
-const formattedText = formatResponse(payload);
-      
-      const botMsg: Message = { 
-        text: formattedText, 
-        originalText: raw, 
-        fromUser: false 
+      const payload = Array.isArray(data.recommendations)
+        ? JSON.stringify({ recommendations: data.recommendations })
+        : (data.answer || "⚠️ No response from backend.");
+
+      const formattedText = formatResponse(payload);
+
+      const botMsg: Message = {
+        text: formattedText,
+        originalText: raw,
+        fromUser: false
       };
-      
+
       updateMessages([...newMessages, botMsg]);
       if (speakMode) doSpeak(raw);
     } catch (err: any) {
@@ -230,7 +230,7 @@ const formattedText = formatResponse(payload);
   const handleQuoteConfirm = (q: string) => {
     setShowQuote(false);
     const userMsg: Message = { text: q, fromUser: true };
-    const raw = "Here’s more info on that.";
+    const raw = "Here's more info on that.";
     const botMsg: Message = { text: raw, originalText: raw, fromUser: false };
     const all = [...messages, userMsg, botMsg];
     updateMessages(all);
@@ -264,11 +264,10 @@ const formattedText = formatResponse(payload);
                   setMessages(s.messages);
                   loadBookmarks(s.id);
                 }}
-                className={`flex-1 px-3 py-2 text-left rounded-lg transition-colors ${
-                  s.id === currentId 
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'hover:bg-gray-100 text-gray-600'
-                }`}
+                className={`flex-1 px-3 py-2 text-left rounded-lg transition-colors ${s.id === currentId
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'hover:bg-gray-100 text-gray-600'
+                  }`}
               >
                 {s.name}
               </button>
@@ -314,12 +313,11 @@ const formattedText = formatResponse(payload);
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {messages.map((m, i) => (
             <div key={i} className={`flex ${m.fromUser ? 'justify-end' : 'justify-start'}`}>
-              <div className={`group relative max-w-2xl p-4 rounded-2xl ${
-                m.fromUser 
-                  ? 'bg-gradient-to-r from-blue-300 to-purple-300 text-white'
-                  : 'bg-white shadow-lg'
-              }`}>
-                <div 
+              <div className={`group relative max-w-2xl p-4 rounded-2xl ${m.fromUser
+                ? 'bg-gradient-to-r from-blue-300 to-purple-300 text-white'
+                : 'bg-white shadow-lg'
+                }`}>
+                <div
                   className={`${m.fromUser ? 'text-white' : 'text-gray-800'} prose max-w-none`}
                   dangerouslySetInnerHTML={{ __html: m.text }}
                 />
@@ -377,7 +375,6 @@ const formattedText = formatResponse(payload);
       <aside className="w-64 border-l border-gray-200 p-4 bg-white">
         <div className="space-y-6">
           <div>
-            
             <button
               onClick={() => setShowEmail(true)}
               className="w-full px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-gray-800 flex items-center gap-2"
@@ -400,7 +397,7 @@ const formattedText = formatResponse(payload);
                 Clear All
               </button>
             </div>
-            
+
             {bookmarks.length === 0 ? (
               <p className="text-gray-500 text-sm">No bookmarks yet</p>
             ) : (
@@ -434,5 +431,26 @@ const formattedText = formatResponse(payload);
         onConfirm={handleQuoteConfirm}
       />
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function ChatPageLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading chat...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main page component with Suspense boundary
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<ChatPageLoading />}>
+      <ChatPageContent />
+    </Suspense>
   );
 }

@@ -5,7 +5,7 @@ export async function POST(request: Request) {
   const payload = await request.json();
 
   // forward to your FastAPI service
-  const res = await fetch("http://10.16.216.161:8000/query", {
+  const res = await fetch("http://10.0.0.155:8000/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

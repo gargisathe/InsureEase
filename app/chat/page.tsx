@@ -188,7 +188,7 @@ function ChatPageContent() {
     }
 
     try {
-      const res = await fetch("http://10.0.0.155:8000/query", {
+      const res = await fetch("https://10.0.0.155:8000/docs/query", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: fullQuery }),
